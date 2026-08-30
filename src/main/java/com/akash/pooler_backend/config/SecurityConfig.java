@@ -6,7 +6,6 @@ import com.akash.pooler_backend.security.CustomAuthEntryPoint;
 import com.akash.pooler_backend.security.filter.RequestLoggingFilter;
 import com.akash.pooler_backend.security.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -120,9 +120,9 @@ public class SecurityConfig {
 
                 //  Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        //  PathRequest.toH2Console() — works correctly for H2 servlet
-                        // in Spring Security 6; MvcRequestMatcher(ApiMapping.H2_CONSOLE_ALL) does NOT.
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        // Match the development H2 path without requiring H2 auto-configuration.
+                        // PathRequest.toH2Console() fails in production when H2 is disabled.
+                        .requestMatchers(PathPatternRequestMatcher.pathPattern(ApiMapping.H2_CONSOLE_ALL)).permitAll()
                         // Public — no token needed
                         .requestMatchers(PUBLIC_MATCHERS).permitAll()
                         // CORS preflight

@@ -21,6 +21,7 @@ MAX_INSTANCES="${MAX_INSTANCES:-3}"
 RUNTIME_SERVICE_ACCOUNT="${RUNTIME_SERVICE_ACCOUNT:-pooler-cloud-run}"
 JWT_SECRET_NAME="${JWT_SECRET_NAME:-pooler-jwt-secret}"
 DB_SECRET_NAME="${DB_SECRET_NAME:-pooler-db-password}"
+RESEND_SECRET_NAME="${RESEND_SECRET_NAME:-pooler-resend-api-key}"
 PROFILE_MEDIA_BUCKET="${PROFILE_MEDIA_BUCKET:-}"
 PROFILE_MEDIA_PRIVATE_BUCKET="${PROFILE_MEDIA_PRIVATE_BUCKET:-}"
 SOURCE_DIR=""
@@ -144,8 +145,15 @@ else
     --role=roles/secretmanager.secretAccessor >/dev/null
 fi
 
-ENV_VARS="SPRING_PROFILES_ACTIVE=prod,DB_DDL_AUTO=update,PROFILE_MEDIA_BUCKET=$PROFILE_MEDIA_BUCKET,PROFILE_MEDIA_PRIVATE_BUCKET=$PROFILE_MEDIA_PRIVATE_BUCKET,PROFILE_MEDIA_PUBLIC_BASE_URL=https://storage.googleapis.com/$PROFILE_MEDIA_BUCKET,MAIL_USERNAME=,MAIL_PASSWORD="
+ENV_VARS="SPRING_PROFILES_ACTIVE=prod,DB_DDL_AUTO=update,PROFILE_MEDIA_BUCKET=$PROFILE_MEDIA_BUCKET,PROFILE_MEDIA_PRIVATE_BUCKET=$PROFILE_MEDIA_PRIVATE_BUCKET,PROFILE_MEDIA_PUBLIC_BASE_URL=https://storage.googleapis.com/$PROFILE_MEDIA_BUCKET"
 SECRET_VARS="JWT_SECRET=$JWT_SECRET_NAME:latest"
+if gcloud secrets describe "$RESEND_SECRET_NAME" >/dev/null 2>&1; then
+  gcloud secrets add-iam-policy-binding "$RESEND_SECRET_NAME" \
+    --member="serviceAccount:$RUNTIME_SA_EMAIL" \
+    --role=roles/secretmanager.secretAccessor >/dev/null
+  ENV_VARS+=",MAIL_HOST=smtp.resend.com,MAIL_PORT=587,MAIL_USERNAME=resend,MAIL_FROM=noreply@athlenaa.com,MAIL_FROM_NAME=Hoppo Auth"
+  SECRET_VARS+=",MAIL_PASSWORD=$RESEND_SECRET_NAME:latest"
+fi
 if [[ "$DATABASE" == mysql ]]; then
   log "Provisioning Cloud SQL for MySQL"
   if ! gcloud sql instances describe "$SQL_INSTANCE" >/dev/null 2>&1; then
@@ -184,7 +192,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --set-secrets "$SECRET_VARS" \
   --min-instances "$MIN_INSTANCES" \
   --max-instances "$MAX_INSTANCES" \
-  --memory 1Gi \
+  --memory 2Gi \
   --cpu 1 \
   "${AUTH_FLAG[@]}" \
   --quiet
