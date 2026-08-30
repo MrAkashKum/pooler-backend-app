@@ -10,9 +10,10 @@
         .logo{font-size:22px;font-weight:700;color:#4f46e5;margin-bottom:24px}
         h1{font-size:24px;color:#1a1a2e;margin:0 0 12px}
         p{color:#555;line-height:1.6;margin:0 0 16px}
-        .btn{display:inline-block;background:#4f46e5;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin:8px 0 24px}
+        .btn{display:inline-block;background:#4338ca;color:#fff!important;padding:14px 32px;border-radius:8px;text-decoration:none!important;font-weight:700;font-size:15px;line-height:20px}
         .footer{margin-top:32px;font-size:12px;color:#999;text-align:center}
-        .feature{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:14px;color:#444}
+        .feature{margin:8px 0;font-size:14px;color:#444}
+        @media only screen and (max-width:600px){body{padding:16px 8px!important}.card{padding:24px 20px!important}.btn{display:block!important;text-align:center!important}}
     </style>
 </head>
 <body>
@@ -24,7 +25,14 @@
     <div class="feature">✅ Multi-device session management</div>
     <div class="feature">✅ Role-based access control</div>
     <br>
-    <a class="btn" th:href="${loginLink}">Get Started</a>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin:8px 0 24px">
+        <tr>
+            <td bgcolor="#4338ca" style="border-radius:8px;text-align:center">
+                <a class="btn" th:href="${loginLink}"
+                   style="display:inline-block;background-color:#4338ca;color:#ffffff!important;padding:14px 32px;border-radius:8px;text-decoration:none!important;font-weight:700;font-size:15px;line-height:20px">Get started</a>
+            </td>
+        </tr>
+    </table>
     <div class="footer">
         &copy; <span th:text="${appName}">Pooler</span>
     </div>

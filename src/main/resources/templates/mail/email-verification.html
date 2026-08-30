@@ -10,10 +10,11 @@
         .logo{font-size:22px;font-weight:800;color:#0b8a61;margin-bottom:24px}
         h1{font-size:24px;color:#1a1a2e;margin:0 0 12px}
         p{color:#555;line-height:1.6;margin:0 0 16px}
-        .btn{display:inline-block;background:#0b8a61;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;margin:8px 0 24px}
+        .btn{display:inline-block;background:#087a56;color:#fff!important;padding:14px 32px;border-radius:8px;text-decoration:none!important;font-weight:700;font-size:15px;line-height:20px}
         .expire{background:#effaf5;border:1px solid #c7ead9;border-radius:8px;padding:12px 16px;font-size:13px;color:#0b6b4b}
         .token{background:#f4f4f4;padding:10px 16px;border-radius:6px;font-family:monospace;font-size:13px;word-break:break-all;margin:12px 0}
         .footer{margin-top:32px;font-size:12px;color:#999;text-align:center}
+        @media only screen and (max-width:600px){body{padding:16px 8px!important}.card{padding:24px 20px!important}.btn{display:block!important;text-align:center!important}}
     </style>
 </head>
 <body>
@@ -22,7 +23,14 @@
     <h1>Activate your account</h1>
     <p>Hi <strong th:text="${userName}">Rider</strong>,</p>
     <p>Confirm this email to finish your Hoppo signup. After activation, you can sign in and continue profile setup.</p>
-    <a class="btn" th:href="${verifyLink}">Activate account</a>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin:8px 0 24px">
+        <tr>
+            <td bgcolor="#087a56" style="border-radius:8px;text-align:center">
+                <a class="btn" th:href="${verifyLink}"
+                   style="display:inline-block;background-color:#087a56;color:#ffffff!important;padding:14px 32px;border-radius:8px;text-decoration:none!important;font-weight:700;font-size:15px;line-height:20px">Activate account</a>
+            </td>
+        </tr>
+    </table>
     <div class="expire">
         This link expires in <strong th:text="${expiryMinutes}">60</strong> minutes. If you did not create this account, you can ignore this email.
     </div>

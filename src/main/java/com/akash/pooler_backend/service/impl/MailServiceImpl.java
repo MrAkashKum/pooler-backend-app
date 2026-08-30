@@ -35,7 +35,7 @@ public class MailServiceImpl implements MailService {
         Context ctx = buildContext(pbUserEntity, Map.of(
                 "resetLink",resetLink,
                 "expiryMinutes", props.getPasswordReset().getTokenExpiryMinutes(),
-                "username", pbUserEntity.getFirstName()
+                TEMPLATE_VARIABLE_USER_NAME, displayName(pbUserEntity)
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Reset Your Password", "mail/password-reset", ctx);
         log.info("Password reset mail dispatched for userId={}", pbUserEntity.getEntityId());
@@ -49,7 +49,7 @@ public class MailServiceImpl implements MailService {
         Context ctx = buildContext(pbUserEntity, Map.of(
                 "verifyLink", verifyLink,
                 "expiryMinutes", props.getEmailVerification().getTokenExpiryMinutes(),
-                TEMPLATE_VARIABLE_USER_NAME, pbUserEntity.getFirstName()
+                TEMPLATE_VARIABLE_USER_NAME, displayName(pbUserEntity)
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Activate your " + props.getName() + " account", "mail/email-verification", ctx);
         log.info("Email verification mail dispatched for userId={}", pbUserEntity.getEntityId());
@@ -59,7 +59,7 @@ public class MailServiceImpl implements MailService {
     @Async("mailExecutor")
     public void sendWelcomeMail(PbUserEntity pbUserEntity) {
         Context ctx = buildContext(pbUserEntity, Map.of(
-                TEMPLATE_VARIABLE_USER_NAME, pbUserEntity.getFirstName(),
+                TEMPLATE_VARIABLE_USER_NAME, displayName(pbUserEntity),
                 "loginLink", props.getFrontendBaseUrl() + "/sign-in"
         ));
         sendHtmlMail(pbUserEntity.getEmail(), "Welcome to " + props.getName(), "mail/welcome", ctx);
@@ -71,7 +71,7 @@ public class MailServiceImpl implements MailService {
     @Async("mailExecutor")
     public void sendAccountLockedMail(PbUserEntity pbUserEntity) {
         Context ctx = buildContext(pbUserEntity, Map.of(
-                TEMPLATE_VARIABLE_USER_NAME, pbUserEntity.getFirstName(),
+                TEMPLATE_VARIABLE_USER_NAME, displayName(pbUserEntity),
                 "lockMinutes", props.getSecurity().getLockDurationMinutes(),
                 "supportEmail", props.getMail().getFrom()
         ));
@@ -107,6 +107,11 @@ public class MailServiceImpl implements MailService {
         ctx.setVariable("baseUrl", props.getBaseUrl());
         extras.forEach(ctx::setVariable);
         return ctx;
+    }
+
+    private static String displayName(PbUserEntity user) {
+        String firstName = user.getFirstName();
+        return firstName == null || firstName.isBlank() ? "there" : firstName.trim();
     }
 
     private static String origin(Exception exception) {
