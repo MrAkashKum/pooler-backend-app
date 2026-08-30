@@ -31,6 +31,7 @@
 		<springdoc.version>3.0.3</springdoc.version>
 		<jjwt.version>0.13.0</jjwt.version>
 		<google-cloud-storage.version>2.71.0</google-cloud-storage.version>
+		<resend-java.version>4.4.0</resend-java.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -46,8 +47,9 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
+			<groupId>com.resend</groupId>
+			<artifactId>resend-java</artifactId>
+			<version>${resend-java.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -113,11 +115,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

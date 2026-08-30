@@ -1,14 +1,18 @@
 {
   "info": {
-    "_postman_id": "c2a4f6d8-cab5-4c2b-8e2a-pooler-full-001",
-    "name": "Pooler Cab-Share API (Full)",
-    "description": "Complete Postman collection for the **Pooler** Spring Boot backend.\n\n**Base URL:** `{{baseUrl}}` — defaults to `http://localhost:8888/pooler-backend` (`server.port=8888`, `server.servlet.contextPath=/pooler-backend`).\n\n**Auth flow:**\n1. `POST /api/v1/auth/register` — create account (auto-stores tokens via test script)\n2. `POST /api/v1/auth/login` — get access + refresh + session tokens (auto-stored)\n3. Bearer auth is configured at the collection level using `{{accessToken}}`\n4. `POST /api/v1/auth/refresh` — rotate access token before it expires\n5. `POST /api/v1/auth/logout` — revoke the current session\n\n**Mobile headers (sent automatically on auth requests):**\n- `X-Device-Id`, `X-Platform`, `X-App-Version`, `X-FCM-Token`\n- `X-Session-Token` — required by `@ValidSession` endpoints (toggle discovery, send/accept/confirm invitation, ride status/cancel, revoke session)\n\n**13 folders, 53 requests** matching the Swagger tags.",
+    "_postman_id": "c2a4f6d8-cab5-4c2b-8e2a-pooler-full-002",
+    "name": "Pooler / Hoppo API (Complete)",
+    "description": "Generated from the deployed OpenAPI specification. Contains 88 operations. Select the Pooler Local or Pooler Staging environment before running requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
     "bearer": [
-      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
     ]
   },
   "event": [
@@ -17,112 +21,606 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Default any missing collection variables on the very first run.",
-          "if (!pm.collectionVariables.get('baseUrl'))    pm.collectionVariables.set('baseUrl',    'http://localhost:8888/pooler-backend');",
-          "if (!pm.collectionVariables.get('deviceId'))   pm.collectionVariables.set('deviceId',   'postman-device-001');",
-          "if (!pm.collectionVariables.get('platform'))   pm.collectionVariables.set('platform',   'ANDROID');",
-          "if (!pm.collectionVariables.get('appVersion')) pm.collectionVariables.set('appVersion', '1.0.0');",
-          "if (!pm.collectionVariables.get('fcmToken'))   pm.collectionVariables.set('fcmToken',   'fcm-test-token-xyz');"
+          "pm.request.headers.upsert({ key: 'X-Device-Id', value: pm.environment.get('deviceId') || 'postman-device-001' });",
+          "pm.request.headers.upsert({ key: 'X-Platform', value: pm.environment.get('platform') || 'ANDROID' });",
+          "pm.request.headers.upsert({ key: 'X-App-Version', value: pm.environment.get('appVersion') || '1.0.0' });",
+          "if (pm.environment.get('sessionToken')) pm.request.headers.upsert({ key: 'X-Session-Token', value: pm.environment.get('sessionToken') });",
+          "if (pm.environment.get('fcmToken')) pm.request.headers.upsert({ key: 'X-FCM-Token', value: pm.environment.get('fcmToken') });"
         ]
       }
     }
   ],
   "variable": [
-    { "key": "baseUrl",      "value": "http://localhost:8888/pooler-backend", "type": "string" },
-    { "key": "accessToken",  "value": "", "type": "string" },
-    { "key": "refreshToken", "value": "", "type": "string" },
-    { "key": "sessionToken", "value": "", "type": "string" },
-    { "key": "userId",       "value": "", "type": "string" },
-    { "key": "deviceId",     "value": "postman-device-001", "type": "string" },
-    { "key": "platform",     "value": "ANDROID", "type": "string" },
-    { "key": "appVersion",   "value": "1.0.0",   "type": "string" },
-    { "key": "fcmToken",     "value": "fcm-test-token-xyz", "type": "string" },
-    { "key": "contactEntityId",    "value": "", "type": "string" },
-    { "key": "locationEntityId",   "value": "", "type": "string" },
-    { "key": "invitationEntityId", "value": "", "type": "string" },
-    { "key": "rideEntityId",       "value": "", "type": "string" },
-    { "key": "sessionId",          "value": "", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8888/pooler-backend"
+    }
   ],
   "item": [
     {
-      "name": "01 · Public",
-      "description": "Health and version probes — no authentication required.",
+      "name": "Admin",
       "item": [
         {
-          "name": "GET Health Check",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/public/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","public","health"]
-            },
-            "description": "Returns service status, version, java runtime, timestamp. Used by mobile apps on cold-start to detect outages."
-          }
-        },
-        {
-          "name": "GET Version",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/public/version",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","public","version"]
-            },
-            "description": "Backend version + minimum required mobile app versions for forced-upgrade prompts."
-          }
-        }
-      ]
-    },
-    {
-      "name": "02 · Authentication",
-      "description": "Register, login, refresh, logout, password reset.",
-      "item": [
-        {
-          "name": "POST Register",
+          "name": "PUT Suspend a user account",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data) {",
-                  "  pm.collectionVariables.set('accessToken',  json.data.accessToken  || '');",
-                  "  pm.collectionVariables.set('refreshToken', json.data.refreshToken || '');",
-                  "  pm.collectionVariables.set('sessionToken', json.data.sessionToken || '');",
-                  "  if (json.data.user && json.data.user.entityId) {",
-                  "    pm.collectionVariables.set('userId', json.data.user.entityId);",
-                  "  }",
-                  "}"
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/suspend?admin=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                "{{userId}}",
+                "suspend"
+              ],
+              "query": [
+                {
+                  "key": "admin",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Suspend a user account"
+          }
+        },
+        {
+          "name": "PUT Re-activate a suspended user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                "{{userId}}",
+                "activate"
+              ]
+            },
+            "description": "Re-activate a suspended user"
+          }
+        },
+        {
+          "name": "GET List all users (paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List all users (paginated)"
+          }
+        },
+        {
+          "name": "GET Get user by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "Get user by ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "item": [
+        {
+          "name": "GET [Admin] Get audit log for any user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit/users/{{userId}}?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "users",
+                "{{userId}}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "[Admin] Get audit log for any user"
+          }
+        },
+        {
+          "name": "GET Get current pbUserEntity's audit log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit/me?pbUserEntity=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get current pbUserEntity's audit log"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "POST Verify email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
             "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Device-Id",  "value": "{{deviceId}}" },
-              { "key": "X-Platform",   "value": "{{platform}}" },
-              { "key": "X-App-Version","value": "{{appVersion}}" },
-              { "key": "X-FCM-Token",  "value": "{{fcmToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\",\n  \"fcmToken\": \"{{fcmToken}}\"\n}"
+              "raw": "{\n  \"token\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-email"
+              ]
+            },
+            "description": "Activates a pending email/password account."
+          }
+        },
+        {
+          "name": "POST Complete password reset with token from email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"string\",\n  \"newPassword\": \"example\",\n  \"confirmPassword\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Complete password reset with token from email"
+          }
+        },
+        {
+          "name": "POST Resend email verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/resend-verification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "resend-verification"
+              ]
+            },
+            "description": "Resends activation email when a pending account exists."
+          }
+        },
+        {
+          "name": "POST Register new user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"string\",\n  \"lastName\": \"string\",\n  \"email\": \"user@example.com\",\n  \"password\": \"example\",\n  \"confirmPassword\": \"string\",\n  \"gender\": \"UNKNOWN\",\n  \"deviceId\": \"string\",\n  \"platform\": \"string\",\n  \"appVersion\": \"string\",\n  \"fcmToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","auth","register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             },
-            "description": "**Rate limit:** 5 req / 5 min per IP.\n\nValidation: `firstName` 2–100, `lastName` 2–100, valid `email`, `password` 8–72 with upper/lower/digit/special.\n\nResponse contains `accessToken`, `refreshToken`, `sessionToken`, `user`. Tokens are auto-saved to collection variables."
+            "description": "Creates a pending account and sends an email verification link."
+          }
+        },
+        {
+          "name": "POST Refresh access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "const json = pm.response.json();",
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Exchange a valid refresh token for a new access + refresh token pair."
+          }
+        },
+        {
+          "name": "POST Logout from current device",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout from current device"
+          }
+        },
+        {
+          "name": "POST Logout from ALL devices",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Revokes all tokens for the authenticated user."
           }
         },
         {
@@ -133,902 +631,3729 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
                   "const json = pm.response.json();",
-                  "if (json && json.data) {",
-                  "  pm.collectionVariables.set('accessToken',  json.data.accessToken  || '');",
-                  "  pm.collectionVariables.set('refreshToken', json.data.refreshToken || '');",
-                  "  pm.collectionVariables.set('sessionToken', json.data.sessionToken || '');",
-                  "  if (json.data.user && json.data.user.entityId) {",
-                  "    pm.collectionVariables.set('userId', json.data.user.entityId);",
-                  "  }",
-                  "}"
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Device-Id",  "value": "{{deviceId}}" },
-              { "key": "X-Platform",   "value": "{{platform}}" },
-              { "key": "X-App-Version","value": "{{appVersion}}" },
-              { "key": "X-FCM-Token",  "value": "{{fcmToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\",\n  \"fcmToken\": \"{{fcmToken}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"string\",\n  \"deviceId\": \"string\",\n  \"platform\": \"string\",\n  \"appVersion\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","auth","login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
-            "description": "**Rate limit:** 10 req / 60s per IP. Returns access (15m), refresh (7d) and session (30m) tokens."
+            "description": "Returns access token (15m), refresh token (7d), session token (30m)."
           }
         },
         {
-          "name": "POST Refresh Access Token",
+          "name": "POST Google sign-in",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
                   "const json = pm.response.json();",
-                  "if (json && json.data && json.data.accessToken) {",
-                  "  pm.collectionVariables.set('accessToken',  json.data.accessToken);",
-                  "  if (json.data.refreshToken) pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
-                  "}"
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+              "raw": "{\n  \"idToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","auth","refresh"]
+              "raw": "{{baseUrl}}/api/v1/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "google"
+              ]
             },
-            "description": "Exchange a valid refresh token for a fresh access + refresh pair."
+            "description": "Verifies a Google ID token and returns Pooler mobile tokens."
           }
         },
         {
-          "name": "POST Logout (current device)",
+          "name": "POST Request password reset email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","auth","logout"]
+            "auth": {
+              "type": "noauth"
             },
-            "description": "Revokes the access + refresh + session tokens for the current device."
-          }
-        },
-        {
-          "name": "POST Logout All Devices",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/logout-all",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","auth","logout-all"]
-            },
-            "description": "Revokes every active session for the authenticated user."
-          }
-        },
-        {
-          "name": "POST Forgot Password",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{authEmail}}\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","auth","forgot-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
             },
-            "description": "**Rate limit:** 3 req / 10 min per IP. Always returns 200 to avoid email-enumeration."
+            "description": "Request password reset email"
           }
         },
         {
-          "name": "POST Reset Password",
+          "name": "POST Apple sign-in",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "const json = pm.response.json();",
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"<token-from-email>\",\n  \"newPassword\": \"<new-password>\"\n}"
+              "raw": "{\n  \"identityToken\": \"example\",\n  \"firstName\": \"string\",\n  \"lastName\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","auth","reset-password"]
+              "raw": "{{baseUrl}}/api/v1/auth/apple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "apple"
+              ]
             },
-            "description": "Completes the reset flow using the token mailed to the user."
+            "description": "Verifies an Apple identity token and returns Hoppo mobile tokens."
           }
         }
       ]
     },
     {
-      "name": "03 · User Profile",
-      "description": "Self-service profile management.",
+      "name": "Contacts",
       "item": [
         {
-          "name": "GET My Profile",
+          "name": "PUT Toggle the favourite flag on a contact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contacts/{{contactEntityId}}/favorite?owner=%5Bobject%20Object%5D&favorite=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contacts",
+                "{{contactEntityId}}",
+                "favorite"
+              ],
+              "query": [
+                {
+                  "key": "owner",
+                  "value": "[object Object]",
+                  "disabled": false
+                },
+                {
+                  "key": "favorite",
+                  "value": "true",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Toggle the favourite flag on a contact"
+          }
+        },
+        {
+          "name": "GET List all contacts (favourites first)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","users","me"]
+              "raw": "{{baseUrl}}/api/v1/contacts?owner=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contacts"
+              ],
+              "query": [
+                {
+                  "key": "owner",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Returns the authenticated user's profile."
+            "description": "List all contacts (favourites first)"
           }
         },
         {
-          "name": "PUT Update Profile",
+          "name": "POST Add a user to your contacts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+919999988888\",\n  \"profilePictureUrl\": \"https://cdn.example.com/u/john.png\"\n}"
+              "raw": "{\n  \"contactUserEntityId\": \"string\",\n  \"nickname\": \"string\",\n  \"favorite\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","users","me"]
+              "raw": "{{baseUrl}}/api/v1/contacts?owner=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contacts"
+              ],
+              "query": [
+                {
+                  "key": "owner",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Partial profile update (name, phone, avatar)."
+            "description": "Add a user to your contacts"
           }
         },
         {
-          "name": "PUT Change Password",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"{{authPassword}}\",\n  \"newPassword\": \"<new-password>\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","users","me","change-password"]
-            },
-            "description": "Requires the current password. After success the user must log in again."
-          }
-        },
-        {
-          "name": "DELETE My Account",
+          "name": "DELETE Remove a contact from your book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","users","me"]
+              "raw": "{{baseUrl}}/api/v1/contacts/{{contactEntityId}}?owner=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contacts",
+                "{{contactEntityId}}"
+              ],
+              "query": [
+                {
+                  "key": "owner",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Permanently deletes the authenticated user's account."
+            "description": "Remove a contact from your book"
           }
         }
       ]
     },
     {
-      "name": "04 · Sessions",
-      "description": "Device-session management for mobile apps.",
+      "name": "Discovery",
       "item": [
         {
-          "name": "GET List Active Sessions",
+          "name": "PUT Turn discovery mode ON or OFF",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"OFF\",\n  \"currentLatitude\": -90,\n  \"currentLongitude\": -180,\n  \"destinationLatitude\": -90,\n  \"destinationLongitude\": -180,\n  \"destinationAddress\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/discovery/toggle?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "discovery",
+                "toggle"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Turn discovery mode ON or OFF"
+          }
+        },
+        {
+          "name": "POST Update your current location while in discovery mode",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": -90,\n  \"longitude\": -180\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/discovery/ping?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "discovery",
+                "ping"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Update your current location while in discovery mode"
+          }
+        },
+        {
+          "name": "POST Find nearby users currently broadcasting in discovery mode",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": -90,\n  \"longitude\": -180,\n  \"radiusKm\": 0.1,\n  \"destinationLatitude\": -90,\n  \"destinationLongitude\": -180\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/discovery/nearby?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "discovery",
+                "nearby"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Find nearby users currently broadcasting in discovery mode"
+          }
+        },
+        {
+          "name": "GET Read your current discovery status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Session-Token", "value": "{{sessionToken}}" }],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/sessions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","sessions"]
+              "raw": "{{baseUrl}}/api/v1/discovery/status?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "discovery",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Lists every device currently logged in. The current session is flagged in the response."
+            "description": "Read your current discovery status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ephemeral Chat",
+      "item": [
+        {
+          "name": "PUT /api/v1/chats/{threadId}/messages/{messageId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"string\",\n  \"newContent\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/messages/{{messageId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "messages",
+                "{{messageId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
           }
         },
         {
-          "name": "DELETE Revoke Session by Id",
+          "name": "POST /api/v1/chats/{threadId}/read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageIds\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/read?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "read"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /api/v1/chats/{threadId}/messages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/messages?user=%5Bobject%20Object%5D&pageable=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                },
+                {
+                  "key": "pageable",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "POST /api/v1/chats/{threadId}/messages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"string\",\n  \"messageType\": \"string\",\n  \"metadata\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/messages?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "POST /api/v1/chats/{threadId}/messages/{messageId}/reactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"string\",\n  \"emoji\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/messages/{{messageId}}/reactions?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "messages",
+                "{{messageId}}",
+                "reactions"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "DELETE /api/v1/chats/{threadId}/messages/{messageId}/reactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Session-Token", "value": "{{sessionToken}}" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","sessions","{{sessionId}}"]
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"string\",\n  \"emoji\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "description": "Logs out a specific device. Guarded by `@ValidSession` — set `{{sessionId}}` first."
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/messages/{{messageId}}/reactions?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "messages",
+                "{{messageId}}",
+                "reactions"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
           }
         },
         {
-          "name": "GET Token Info",
+          "name": "GET List active chats for the current user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List active chats for the current user"
+          }
+        },
+        {
+          "name": "GET /api/v1/chats/{threadId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "DELETE /api/v1/chats/{threadId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /api/v1/chats/{threadId}/search",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/search?user=%5Bobject%20Object%5D&query=string",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                },
+                {
+                  "key": "query",
+                  "value": "string",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /api/v1/chats/{threadId}/messages/{messageId}/receipts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/messages/{{messageId}}/receipts?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "messages",
+                "{{messageId}}",
+                "receipts"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /api/v1/chats/by-invitation/{invitationId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/by-invitation/{{invitationEntityId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "by-invitation",
+                "{{invitationEntityId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ephemeral Chat Files",
+      "item": [
+        {
+          "name": "POST /api/v1/chats/{threadId}/files",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "id",
+                  "type": "text",
+                  "value": "0"
+                },
+                {
+                  "key": "createdAt",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "updatedAt",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "username",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "email",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "entityId",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "role",
+                  "type": "text",
+                  "value": "ROLE_USER"
+                },
+                {
+                  "key": "passwordHash",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "firstName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "lastName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "profilePictureUrl",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "paymentQrCodeUrl",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "gender",
+                  "type": "text",
+                  "value": "UNKNOWN"
+                },
+                {
+                  "key": "matchPreference",
+                  "type": "text",
+                  "value": "ANY"
+                },
+                {
+                  "key": "emergencyContactName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "emergencyContactPhone",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "emergencyMessage",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "status",
+                  "type": "text",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "lastLoginAt",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "failedLoginAttempts",
+                  "type": "text",
+                  "value": "0"
+                },
+                {
+                  "key": "lockedUntil",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "accountNonExpired",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "credentialsNonExpired",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "accountNonLocked",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "authorities",
+                  "type": "text",
+                  "value": "[object Object]"
+                },
+                {
+                  "key": "password",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "enabled",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "fullName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "active",
+                  "type": "text",
+                  "value": "true"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chats/{{threadId}}/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chats",
+                "{{threadId}}",
+                "files"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /api/v1/chat-files/{fileId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat-files/{{fileId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chat-files",
+                "{{fileId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "GET List all app feedback",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback"
+              ]
+            },
+            "description": "List all app feedback"
+          }
+        },
+        {
+          "name": "POST Create private app feedback",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emotion\": \"string\",\n  \"subject\": \"string\",\n  \"rating\": 1,\n  \"message\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Create private app feedback"
+          }
+        },
+        {
+          "name": "DELETE Delete one feedback record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback/{{feedbackEntityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback",
+                "{{feedbackEntityId}}"
+              ]
+            },
+            "description": "Delete one feedback record"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Geo Math",
+      "item": [
+        {
+          "name": "POST Run the Overlap Rule for two trips",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userAOriginLat\": -90,\n  \"userAOriginLng\": -180,\n  \"userADestLat\": -90,\n  \"userADestLng\": -180,\n  \"userBOriginLat\": -90,\n  \"userBOriginLng\": -180,\n  \"userBDestLat\": -90,\n  \"userBDestLng\": -180\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/geo/route-compatibility",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geo",
+                "route-compatibility"
+              ]
+            },
+            "description": "Run the Overlap Rule for two trips"
+          }
+        },
+        {
+          "name": "POST Compute the common pickup hub between two users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userALatitude\": -90,\n  \"userALongitude\": -180,\n  \"userBLatitude\": -90,\n  \"userBLongitude\": -180\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/geo/midpoint",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geo",
+                "midpoint"
+              ]
+            },
+            "description": "Compute the common pickup hub between two users"
+          }
+        },
+        {
+          "name": "GET Great-circle distance and bearing between two coordinates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/geo/distance?lat1=-90&lng1=-180&lat2=-90&lng2=-180",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geo",
+                "distance"
+              ],
+              "query": [
+                {
+                  "key": "lat1",
+                  "value": "-90",
+                  "disabled": false
+                },
+                {
+                  "key": "lng1",
+                  "value": "-180",
+                  "disabled": false
+                },
+                {
+                  "key": "lat2",
+                  "value": "-90",
+                  "disabled": false
+                },
+                {
+                  "key": "lng2",
+                  "value": "-180",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Great-circle distance and bearing between two coordinates"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Live Location",
+      "item": [
+        {
+          "name": "GET Fetch the latest live pings for both participants of this ride",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/live-location?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "live-location"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Fetch the latest live pings for both participants of this ride"
+          }
+        },
+        {
+          "name": "POST Publish your current GPS ping for this ride",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": -90,\n  \"longitude\": -180,\n  \"headingDegrees\": 0,\n  \"speedKmh\": 0,\n  \"accuracyMeters\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/live-location?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "live-location"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Publish your current GPS ping for this ride"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "GET Returns backend version + minimum required app version",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "version"
+              ]
+            },
+            "description": "Returns backend version + minimum required app version"
+          }
+        },
+        {
+          "name": "GET Health check for mobile app startup ping",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "health"
+              ]
+            },
+            "description": "Health check for mobile app startup ping"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ride Invitations",
+      "item": [
+        {
+          "name": "POST Send a ride-share invitation to another user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverEntityId\": \"string\",\n  \"senderLatitude\": -90,\n  \"senderLongitude\": -180,\n  \"senderDestinationLatitude\": -90,\n  \"senderDestinationLongitude\": -180,\n  \"senderDestinationAddress\": \"string\",\n  \"message\": \"string\",\n  \"ttlSeconds\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations?sender=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations"
+              ],
+              "query": [
+                {
+                  "key": "sender",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Send a ride-share invitation to another user"
+          }
+        },
+        {
+          "name": "POST Decline an invitation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/decline?receiver=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "{{invitationEntityId}}",
+                "decline"
+              ],
+              "query": [
+                {
+                  "key": "receiver",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Decline an invitation"
+          }
+        },
+        {
+          "name": "POST Confirm the suggested pickup hub; ride is created when both parties confirm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/confirm-pickup?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "{{invitationEntityId}}",
+                "confirm-pickup"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Confirm the suggested pickup hub; ride is created when both parties confirm"
+          }
+        },
+        {
+          "name": "POST Cancel an invitation (either party)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/cancel?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "{{invitationEntityId}}",
+                "cancel"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Cancel an invitation (either party)"
+          }
+        },
+        {
+          "name": "POST Accept an invitation and compute the common pickup hub",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverLatitude\": -90,\n  \"receiverLongitude\": -180,\n  \"receiverDestinationLatitude\": -90,\n  \"receiverDestinationLongitude\": -180,\n  \"receiverDestinationAddress\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/accept?receiver=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "{{invitationEntityId}}",
+                "accept"
+              ],
+              "query": [
+                {
+                  "key": "receiver",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Accept an invitation and compute the common pickup hub"
+          }
+        },
+        {
+          "name": "GET Fetch a single invitation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "{{invitationEntityId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Fetch a single invitation"
+          }
+        },
+        {
+          "name": "GET List invitations sent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations/outbox?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "outbox"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List invitations sent"
+          }
+        },
+        {
+          "name": "GET List invitations received",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invitations/inbox?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "inbox"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List invitations received"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rides",
+      "item": [
+        {
+          "name": "PUT Advance a ride to the next lifecycle state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REQUESTED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/status?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Advance a ride to the next lifecycle state"
+          }
+        },
+        {
+          "name": "POST Share the current user's payment QR with the matched rider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/payment-qr/share?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "payment-qr",
+                "share"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Share the current user's payment QR with the matched rider"
+          }
+        },
+        {
+          "name": "DELETE Revoke payment QR access for the matched rider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/payment-qr/share?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "payment-qr",
+                "share"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Revoke payment QR access for the matched rider"
+          }
+        },
+        {
+          "name": "POST Store final provider fare and calculate distance-based rider shares",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"totalFare\": 0.01,\n  \"currency\": \"example\",\n  \"provider\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/fare-split?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "fare-split"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Store final provider fare and calculate distance-based rider shares"
+          }
+        },
+        {
+          "name": "POST Cancel a non-terminal ride",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/cancel?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "cancel"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Cancel a non-terminal ride"
+          }
+        },
+        {
+          "name": "POST Confirm physical arrival; cab handoff unlocks after both riders confirm",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": -90,\n  \"longitude\": -180,\n  \"accuracyMeters\": 0,\n  \"recordedAt\": \"1970-01-01T00:00:00.000Z\",\n  \"locationPairValid\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/arrive?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "arrive"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Confirm physical arrival; cab handoff unlocks after both riders confirm"
+          }
+        },
+        {
+          "name": "GET Fetch a single ride (must be a participant)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Fetch a single ride (must be a participant)"
+          }
+        },
+        {
+          "name": "GET Get a short-lived QR URL as the owner or authorized matched rider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/payment-qr?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "payment-qr"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                },
+                {
+                  "key": "ownerEntityId",
+                  "value": "string",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get a short-lived QR URL as the owner or authorized matched rider"
+          }
+        },
+        {
+          "name": "GET Get optional payment QR availability and ride-scoped sharing status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/payment-qr/status?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "{{rideEntityId}}",
+                "payment-qr",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Get optional payment QR availability and ride-scoped sharing status"
+          }
+        },
+        {
+          "name": "GET List completed and cancelled rides",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/history?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List completed and cancelled rides"
+          }
+        },
+        {
+          "name": "GET List rides currently in progress",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rides/active?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rides",
+                "active"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List rides currently in progress"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Safety Reports",
+      "item": [
+        {
+          "name": "GET List reports created by the current user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/safety-reports?reporter=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "safety-reports"
+              ],
+              "query": [
+                {
+                  "key": "reporter",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List reports created by the current user"
+          }
+        },
+        {
+          "name": "POST Create a safety report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rideEntityId\": \"string\",\n  \"category\": \"string\",\n  \"details\": \"string\",\n  \"contactAllowed\": true,\n  \"latitude\": -90,\n  \"longitude\": -180\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/safety-reports?reporter=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "safety-reports"
+              ],
+              "query": [
+                {
+                  "key": "reporter",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Create a safety report"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Saved Locations",
+      "item": [
+        {
+          "name": "GET Fetch a specific saved location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations/{{locationEntityId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "{{locationEntityId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Fetch a specific saved location"
+          }
+        },
+        {
+          "name": "PUT Update a saved location (partial)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"string\",\n  \"address\": \"string\",\n  \"latitude\": -90,\n  \"longitude\": -180\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations/{{locationEntityId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "{{locationEntityId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Update a saved location (partial)"
+          }
+        },
+        {
+          "name": "DELETE Delete a saved location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations/{{locationEntityId}}?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "{{locationEntityId}}"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Delete a saved location"
+          }
+        },
+        {
+          "name": "GET List all saved locations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List all saved locations"
+          }
+        },
+        {
+          "name": "POST Save a new location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"HOME\",\n  \"label\": \"string\",\n  \"address\": \"string\",\n  \"latitude\": -90,\n  \"longitude\": -180\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Save a new location"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "GET List all active sessions (logged-in devices)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions?pbUserEntity=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List all active sessions (logged-in devices)"
+          }
+        },
+        {
+          "name": "GET Decode access token metadata (expiry, role, type)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/sessions/token-info",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","sessions","token-info"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "token-info"
+              ]
             },
-            "description": "Decodes the bearer token (subject, email, type, expiry, expired flag)."
-          }
-        }
-      ]
-    },
-    {
-      "name": "05 · Admin",
-      "description": "Privileged endpoints — `ROLE_ADMIN` required.",
-      "item": [
-        {
-          "name": "GET List Users (paged)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users?page=0&size=20&sort=createdAt",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","admin","users"],
-              "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "20" },
-                { "key": "sort", "value": "createdAt" }
-              ]
-            }
+            "description": "Decode access token metadata (expiry, role, type)"
           }
         },
         {
-          "name": "GET User By Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","admin","users","1"]
-            }
-          }
-        },
-        {
-          "name": "PUT Suspend User",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/1/suspend",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","admin","users","1","suspend"]
-            }
-          }
-        },
-        {
-          "name": "PUT Activate User",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/1/activate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","admin","users","1","activate"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "06 · Audit Logs",
-      "description": "Append-only security audit trail.",
-      "item": [
-        {
-          "name": "GET My Audit Logs",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/audit/me?page=0&size=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","audit","me"],
-              "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "20" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "GET User Audit Logs (admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/audit/users/{{userId}}?page=0&size=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","audit","users","{{userId}}"],
-              "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "20" }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "07 · Saved Locations",
-      "description": "Bookmarked places — HOME / WORK / CUSTOM.",
-      "item": [
-        {
-          "name": "POST Create Saved Location",
+          "name": "DELETE Revoke a specific session (log out a device)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data && json.data.entityId) {",
-                  "  pm.collectionVariables.set('locationEntityId', json.data.entityId);",
-                  "}"
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
                 ]
               }
             }
           ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"label\": \"Home\",\n  \"category\": \"HOME\",\n  \"address\": \"42 Marigold Lane, Bengaluru, India\",\n  \"latitude\": 12.9716,\n  \"longitude\": 77.5946\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/locations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","locations"]
-            },
-            "description": "Saves a HOME / WORK / CUSTOM bookmark. The new `entityId` is captured into `{{locationEntityId}}`."
-          }
-        },
-        {
-          "name": "GET List Saved Locations",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/locations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","locations"]
-            }
-          }
-        },
-        {
-          "name": "GET Saved Location By Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/locations/{{locationEntityId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","locations","{{locationEntityId}}"]
-            }
-          }
-        },
-        {
-          "name": "PUT Update Saved Location",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"label\": \"Home (renamed)\",\n  \"address\": \"42-A Marigold Lane, Bengaluru, India\",\n  \"latitude\": 12.9720,\n  \"longitude\": 77.5950\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/locations/{{locationEntityId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","locations","{{locationEntityId}}"]
-            },
-            "description": "Partial update — only the supplied fields are changed."
-          }
-        },
-        {
-          "name": "DELETE Saved Location",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/locations/{{locationEntityId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","locations","{{locationEntityId}}"]
-            }
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}?pbUserEntity=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Revoke a specific session (log out a device)"
           }
         }
       ]
     },
     {
-      "name": "08 · Contacts",
-      "description": "Friend-list / quick-invite contact book.",
+      "name": "Telegram Handoff",
       "item": [
         {
-          "name": "POST Add Contact",
+          "name": "GET /api/v1/telegram/me",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data && json.data.entityId) {",
-                  "  pm.collectionVariables.set('contactEntityId', json.data.entityId);",
-                  "}"
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
                 ]
               }
             }
           ],
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"contactUserEntityId\": \"<entityId-of-other-user>\",\n  \"nickname\": \"Aman (Office)\",\n  \"favorite\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/contacts",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","contacts"]
-            },
-            "description": "Adds another registered user to your contact book."
-          }
-        },
-        {
-          "name": "GET List Contacts",
-          "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/contacts",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","contacts"]
+              "raw": "{{baseUrl}}/api/v1/telegram/me?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "telegram",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Returns contacts with favourites listed first."
+            "description": ""
           }
         },
         {
-          "name": "PUT Toggle Favourite",
+          "name": "PUT /api/v1/telegram/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PUT",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telegramHandle\": \"example\",\n  \"telegramPhoneNumber\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/contacts/{{contactEntityId}}/favorite?favorite=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","contacts","{{contactEntityId}}","favorite"],
-              "query": [{ "key": "favorite", "value": "true" }]
-            }
+              "raw": "{{baseUrl}}/api/v1/telegram/me?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "telegram",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
           }
         },
         {
-          "name": "DELETE Contact",
+          "name": "DELETE /api/v1/telegram/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/contacts/{{contactEntityId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","contacts","{{contactEntityId}}"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "09 · Discovery",
-      "description": "Ride-sharing toggle and nearby-user search.",
-      "item": [
-        {
-          "name": "PUT Toggle Discovery",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"enabled\": true,\n  \"latitude\": 12.9716,\n  \"longitude\": 77.5946,\n  \"radiusMeters\": 1500\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/discovery/toggle",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","discovery","toggle"]
-            },
-            "description": "Turns discovery mode ON or OFF. `@ValidSession` — requires `X-Session-Token`."
-          }
-        },
-        {
-          "name": "POST Discovery Ping",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"latitude\": 12.9716,\n  \"longitude\": 77.5946,\n  \"accuracyMeters\": 12.5\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/discovery/ping",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","discovery","ping"]
-            },
-            "description": "Refreshes the user's broadcast location while in discovery mode."
-          }
-        },
-        {
-          "name": "GET Discovery Status",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/discovery/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","discovery","status"]
-            }
-          }
-        },
-        {
-          "name": "POST Find Nearby Users",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"latitude\": 12.9716,\n  \"longitude\": 77.5946,\n  \"radiusMeters\": 2000,\n  \"maxResults\": 25\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/discovery/nearby",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","discovery","nearby"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "10 · Geo Math",
-      "description": "Stateless distance / midpoint / route-overlap helpers.",
-      "item": [
-        {
-          "name": "GET Distance (Haversine)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/geo/distance?lat1=12.9716&lng1=77.5946&lat2=12.2958&lng2=76.6394",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","geo","distance"],
+              "raw": "{{baseUrl}}/api/v1/telegram/me?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "telegram",
+                "me"
+              ],
               "query": [
-                { "key": "lat1", "value": "12.9716" },
-                { "key": "lng1", "value": "77.5946" },
-                { "key": "lat2", "value": "12.2958" },
-                { "key": "lng2", "value": "76.6394" }
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
               ]
             },
-            "description": "Great-circle distance and bearing between two coordinates."
+            "description": ""
           }
         },
         {
-          "name": "POST Midpoint Hub",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userALatitude\":  12.9716,\n  \"userALongitude\": 77.5946,\n  \"userBLatitude\":  12.9352,\n  \"userBLongitude\": 77.6245\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/geo/midpoint",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","geo","midpoint"]
-            },
-            "description": "Computes the suggested common pickup hub between two users (Meet-in-the-Middle engine)."
-          }
-        },
-        {
-          "name": "POST Route Compatibility",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userAOriginLat\": 12.9716, \"userAOriginLng\": 77.5946,\n  \"userADestLat\":   12.9279, \"userADestLng\":   77.6271,\n  \"userBOriginLat\": 12.9698, \"userBOriginLng\": 77.5980,\n  \"userBDestLat\":   12.9300, \"userBDestLng\":   77.6300\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/geo/route-compatibility",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","geo","route-compatibility"]
-            },
-            "description": "Runs the Overlap Rule for two trips (origin + destination of each user)."
-          }
-        }
-      ]
-    },
-    {
-      "name": "11 · Ride Invitations",
-      "description": "Two-party invitation lifecycle.",
-      "item": [
-        {
-          "name": "POST Send Invitation",
+          "name": "POST /api/v1/telegram/chats/{threadId}/share",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data && json.data.entityId) {",
-                  "  pm.collectionVariables.set('invitationEntityId', json.data.entityId);",
-                  "}"
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"receiverEntityId\": \"<entityId-of-other-user>\",\n  \"senderOriginLat\":   12.9716,\n  \"senderOriginLng\":   77.5946,\n  \"senderDestLat\":     12.9279,\n  \"senderDestLng\":     77.6271,\n  \"message\":           \"Heading to the office, want to share?\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations"]
-            },
-            "description": "Sends a ride-share invitation. `@ValidSession`."
-          }
-        },
-        {
-          "name": "POST Accept Invitation",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"receiverOriginLat\": 12.9698,\n  \"receiverOriginLng\": 77.5980,\n  \"receiverDestLat\":   12.9300,\n  \"receiverDestLng\":   77.6300\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/accept",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations","{{invitationEntityId}}","accept"]
-            },
-            "description": "Accepts an invitation and computes the suggested common pickup hub."
-          }
-        },
-        {
-          "name": "POST Decline Invitation",
-          "request": {
-            "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/decline",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations","{{invitationEntityId}}","decline"]
-            }
+              "raw": "{{baseUrl}}/api/v1/telegram/chats/{{threadId}}/share?user=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "telegram",
+                "chats",
+                "{{threadId}}",
+                "share"
+              ],
+              "query": [
+                {
+                  "key": "user",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": ""
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
         {
-          "name": "POST Confirm Pickup",
+          "name": "GET Get current user profile",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data && json.data.ride && json.data.ride.entityId) {",
-                  "  pm.collectionVariables.set('rideEntityId', json.data.ride.entityId);",
-                  "}"
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
                 ]
               }
             }
           ],
           "request": {
-            "method": "POST",
-            "header": [{ "key": "X-Session-Token", "value": "{{sessionToken}}" }],
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/confirm-pickup",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations","{{invitationEntityId}}","confirm-pickup"]
+              "raw": "{{baseUrl}}/api/v1/users/me?pbUserEntity=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Confirms the suggested pickup hub. When **both** parties confirm, a Ride is created and `{{rideEntityId}}` is auto-set."
+            "description": "Get current user profile"
           }
         },
         {
-          "name": "POST Cancel Invitation",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations","{{invitationEntityId}}","cancel"]
+          "name": "PUT Update profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
             }
-          }
-        },
-        {
-          "name": "GET Invitation By Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations/{{invitationEntityId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations","{{invitationEntityId}}"]
-            }
-          }
-        },
-        {
-          "name": "GET Invitation Inbox",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations/inbox",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations","inbox"]
-            }
-          }
-        },
-        {
-          "name": "GET Invitation Outbox",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/invitations/outbox",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","invitations","outbox"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "12 · Rides",
-      "description": "Confirmed shared-ride lifecycle.",
-      "item": [
-        {
-          "name": "GET Ride By Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","rides","{{rideEntityId}}"]
-            }
-          }
-        },
-        {
-          "name": "GET Active Rides",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/active",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","rides","active"]
-            }
-          }
-        },
-        {
-          "name": "GET Ride History",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/history",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","rides","history"]
-            }
-          }
-        },
-        {
-          "name": "PUT Update Ride Status",
+          ],
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"note\":   \"Driver arrived at hub\"\n}"
+              "raw": "{\n  \"firstName\": \"string\",\n  \"lastName\": \"string\",\n  \"gender\": \"UNKNOWN\",\n  \"matchPreference\": \"ANY\",\n  \"emergencyContactName\": \"string\",\n  \"emergencyContactPhone\": \"string\",\n  \"emergencyMessage\": \"string\",\n  \"firstNameValidWhenProvided\": true,\n  \"lastNameValidWhenProvided\": true,\n  \"genderSelectedWhenProvided\": true,\n  \"emergencyPhoneReasonableWhenProvided\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","rides","{{rideEntityId}}","status"]
+              "raw": "{{baseUrl}}/api/v1/users/me?pbUserEntity=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Allowed transitions: PENDING_PICKUP → IN_PROGRESS → COMPLETED. `@ValidSession`."
+            "description": "Update profile"
           }
         },
         {
-          "name": "POST Cancel Ride",
+          "name": "DELETE Delete account permanently",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "POST",
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me?pbUserEntity=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Delete account permanently"
+          }
+        },
+        {
+          "name": "PUT Change password (requires current password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reason\": \"Other party didn't show up\"\n}"
+              "raw": "{\n  \"currentPassword\": \"string\",\n  \"newPassword\": \"string\",\n  \"confirmPassword\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","rides","{{rideEntityId}}","cancel"]
+              "raw": "{{baseUrl}}/api/v1/users/me/change-password?pbUserEntity=%5Bobject%20Object%5D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "change-password"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Cancels a non-terminal ride. `@ValidSession`."
-          }
-        }
-      ]
-    },
-    {
-      "name": "13 · Live Location",
-      "description": "Real-time GPS pings while a ride is active.",
-      "item": [
-        {
-          "name": "POST Publish My Live Ping",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"latitude\":  12.9716,\n  \"longitude\": 77.5946,\n  \"speedMps\":   8.4,\n  \"headingDeg\": 92.0,\n  \"accuracyMeters\": 9.5\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/live-location",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","rides","{{rideEntityId}}","live-location"]
-            },
-            "description": "Mobile clients post here every few seconds while the ride is active."
+            "description": "Change password (requires current password)"
           }
         },
         {
-          "name": "GET Live Pings For Ride",
+          "name": "GET Create a short-lived owner-only URL for private profile media",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/{{rideEntityId}}/live-location",
-              "host": ["{{baseUrl}}"],
-              "path": ["api","v1","rides","{{rideEntityId}}","live-location"]
+              "raw": "{{baseUrl}}/api/v1/users/me/media?pbUserEntity=%5Bobject%20Object%5D&purpose=PROFILE_PHOTO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "media"
+              ],
+              "query": [
+                {
+                  "key": "pbUserEntity",
+                  "value": "[object Object]",
+                  "disabled": false
+                },
+                {
+                  "key": "purpose",
+                  "value": "PROFILE_PHOTO",
+                  "disabled": false
+                }
+              ]
             },
-            "description": "Returns the latest ping for every participant of the ride."
+            "description": "Create a short-lived owner-only URL for private profile media"
+          }
+        },
+        {
+          "name": "POST Upload optional profile photo or payment QR image to S3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "id",
+                  "type": "text",
+                  "value": "0"
+                },
+                {
+                  "key": "createdAt",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "updatedAt",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "username",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "email",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "entityId",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "role",
+                  "type": "text",
+                  "value": "ROLE_USER"
+                },
+                {
+                  "key": "passwordHash",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "firstName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "lastName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "profilePictureUrl",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "paymentQrCodeUrl",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "gender",
+                  "type": "text",
+                  "value": "UNKNOWN"
+                },
+                {
+                  "key": "matchPreference",
+                  "type": "text",
+                  "value": "ANY"
+                },
+                {
+                  "key": "emergencyContactName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "emergencyContactPhone",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "emergencyMessage",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "status",
+                  "type": "text",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "lastLoginAt",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "failedLoginAttempts",
+                  "type": "text",
+                  "value": "0"
+                },
+                {
+                  "key": "lockedUntil",
+                  "type": "text",
+                  "value": "1970-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "accountNonExpired",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "credentialsNonExpired",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "accountNonLocked",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "authorities",
+                  "type": "text",
+                  "value": "[object Object]"
+                },
+                {
+                  "key": "password",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "enabled",
+                  "type": "text",
+                  "value": "true"
+                },
+                {
+                  "key": "fullName",
+                  "type": "text",
+                  "value": "string"
+                },
+                {
+                  "key": "active",
+                  "type": "text",
+                  "value": "true"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/media?purpose=PROFILE_PHOTO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "media"
+              ],
+              "query": [
+                {
+                  "key": "purpose",
+                  "value": "PROFILE_PHOTO",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Upload optional profile photo or payment QR image to S3"
           }
         }
       ]

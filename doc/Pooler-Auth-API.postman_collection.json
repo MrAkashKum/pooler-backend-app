@@ -1,881 +1,591 @@
 {
   "info": {
-    "_postman_id": "f1b3e3a0-1234-4abc-9def-pooler0001",
-    "name": "Pooler Auth API",
-    "description": "Complete Postman collection for the Pooler Spring Boot backend.\n\n**Base URL:** `{{baseUrl}}` (default `http://localhost:8888/pooler-backend`)\n\n**Auth flow:**\n1. `POST /api/v1/auth/register` — create account, get tokens\n2. `POST /api/v1/auth/login` — get tokens\n3. Use `{{accessToken}}` (Bearer) for protected endpoints\n4. `POST /api/v1/auth/refresh` — get a new access token before expiry\n5. `POST /api/v1/auth/logout` — revoke session\n\n**Mobile-specific headers (optional but recommended):**\n- `X-Device-Id` — UUID / Android ID\n- `X-Platform` — `ANDROID` | `IOS` | `WEB`\n- `X-App-Version` — semver, e.g. `1.0.0`\n- `X-FCM-Token` — Firebase push token\n- `X-Session-Token` — current session token (required by `@ValidSession` endpoints)\n\nLogin/register responses automatically populate `{{accessToken}}`, `{{refreshToken}}`, `{{sessionToken}}` and `{{userId}}` via the test scripts in this collection.",
+    "_postman_id": "a18d521f-e854-483f-a9d6-pooler-auth-002",
+    "name": "Pooler / Hoppo Authentication API",
+    "description": "Generated from the deployed OpenAPI specification. Contains 88 operations. Select the Pooler Local or Pooler Staging environment before running requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
     "bearer": [
-      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
     ]
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'X-Device-Id', value: pm.environment.get('deviceId') || 'postman-device-001' });",
+          "pm.request.headers.upsert({ key: 'X-Platform', value: pm.environment.get('platform') || 'ANDROID' });",
+          "pm.request.headers.upsert({ key: 'X-App-Version', value: pm.environment.get('appVersion') || '1.0.0' });",
+          "if (pm.environment.get('sessionToken')) pm.request.headers.upsert({ key: 'X-Session-Token', value: pm.environment.get('sessionToken') });",
+          "if (pm.environment.get('fcmToken')) pm.request.headers.upsert({ key: 'X-FCM-Token', value: pm.environment.get('fcmToken') });"
+        ]
+      }
+    }
+  ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8888/pooler-backend", "type": "string" },
-    { "key": "accessToken", "value": "", "type": "string" },
-    { "key": "refreshToken", "value": "", "type": "string" },
-    { "key": "sessionToken", "value": "", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" },
-    { "key": "deviceId", "value": "postman-device-001", "type": "string" },
-    { "key": "platform", "value": "ANDROID", "type": "string" },
-    { "key": "appVersion", "value": "1.0.0", "type": "string" },
-    { "key": "fcmToken", "value": "fcm-test-token-xyz", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8888/pooler-backend"
+    }
   ],
   "item": [
     {
-      "name": "Public",
-      "description": "Health and version endpoints — no authentication required.",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/public/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "public", "health"]
-            },
-            "description": "Returns service status, version, java runtime, timestamp."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/public/health" }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"status\": \"UP\",\n    \"service\": \"Pooler Service\",\n    \"version\": \"1.0.0\",\n    \"java\": \"21\",\n    \"timestamp\": \"2026-05-05T10:00:00Z\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Version",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/public/version",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "public", "version"]
-            },
-            "description": "Returns backend version + minimum required mobile app versions."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": { "raw": "{{baseUrl}}/api/v1/public/version" }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"backendVersion\": \"1.0.0\",\n    \"minAndroidVersion\": \"1.0.0\",\n    \"minIosVersion\": \"1.0.0\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "name": "Authentication",
-      "description": "Register, login, token refresh, password reset, logout.",
       "item": [
         {
-          "name": "Register",
+          "name": "POST Verify email",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data) {",
-                  "  pm.collectionVariables.set('accessToken',  json.data.accessToken  || '');",
-                  "  pm.collectionVariables.set('refreshToken', json.data.refreshToken || '');",
-                  "  pm.collectionVariables.set('sessionToken', json.data.sessionToken || '');",
-                  "  if (json.data.user && json.data.user.entityId) {",
-                  "    pm.collectionVariables.set('userId', json.data.user.entityId);",
-                  "  }",
-                  "}"
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "X-Device-Id", "value": "{{deviceId}}" },
-              { "key": "X-Platform", "value": "{{platform}}" },
-              { "key": "X-App-Version", "value": "{{appVersion}}" },
-              { "key": "X-FCM-Token", "value": "{{fcmToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\",\n  \"fcmToken\": \"{{fcmToken}}\"\n}"
+              "raw": "{\n  \"token\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-email"
+              ]
             },
-            "description": "**Rate limit:** 5 req / 5 min per IP.\n\n**Validation:**\n- `firstName` 2–100 chars (required)\n- `lastName` 2–100 chars (required)\n- `email` valid email (required)\n- `password` 8–72 chars; must contain uppercase, lowercase, digit, special char (required)\n- `deviceId`, `platform`, `appVersion`, `fcmToken` optional\n\nResponse contains `accessToken`, `refreshToken`, `sessionToken`, `user`. The collection's test script automatically stores them as collection variables."
-          },
-          "response": [
-            {
-              "name": "201 Created",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/register" }
-              },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Resource created successfully\",\n  \"data\": {\n    \"accessToken\": \"<jwt-token>\",\n    \"refreshToken\": \"<jwt-token>\",\n    \"sessionToken\": \"<jwt-token>\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900,\n    \"refreshTokenExpiresIn\": 604800,\n    \"user\": {\n      \"entityId\": \"USR0000001\",\n      \"email\": \"{{authEmail}}\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\",\n      \"createdAt\": \"2026-05-05T10:00:00Z\"\n    }\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            },
-            {
-              "name": "400 Validation Error",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/register" }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"Password must contain uppercase, lowercase, digit and special character\",\n  \"errorCode\": \"VALIDATION_FAILED\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            },
-            {
-              "name": "409 User Already Exists",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/register" }
-              },
-              "status": "Conflict",
-              "code": 409,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"User already exists with email: {{authEmail}}\",\n  \"errorCode\": \"USER_ALREADY_EXISTS\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
+            "description": "Activates a pending email/password account."
+          }
         },
         {
-          "name": "Login",
+          "name": "POST Complete password reset with token from email",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data) {",
-                  "  pm.collectionVariables.set('accessToken',  json.data.accessToken  || '');",
-                  "  pm.collectionVariables.set('refreshToken', json.data.refreshToken || '');",
-                  "  pm.collectionVariables.set('sessionToken', json.data.sessionToken || '');",
-                  "  if (json.data.user && json.data.user.entityId) {",
-                  "    pm.collectionVariables.set('userId', json.data.user.entityId);",
-                  "  }",
-                  "}"
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "X-Device-Id", "value": "{{deviceId}}" },
-              { "key": "X-Platform", "value": "{{platform}}" },
-              { "key": "X-App-Version", "value": "{{appVersion}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"platform\": \"{{platform}}\",\n  \"appVersion\": \"{{appVersion}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
-            },
-            "description": "**Rate limit:** 10 req / 60 s per IP.\n\nReturns:\n- `accessToken` (15 m)\n- `refreshToken` (7 d)\n- `sessionToken` (30 m)"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login" }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"<jwt-token>\",\n    \"refreshToken\": \"<jwt-token>\",\n    \"sessionToken\": \"<jwt-token>\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900,\n    \"refreshTokenExpiresIn\": 604800,\n    \"user\": {\n      \"entityId\": \"USR0000001\",\n      \"email\": \"{{authEmail}}\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\"\n    }\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            },
-            {
-              "name": "401 Invalid Credentials",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login" }
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid email or password\",\n  \"errorCode\": \"INVALID_CREDENTIALS\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            },
-            {
-              "name": "423 Account Locked",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/login" }
-              },
-              "status": "Locked",
-              "code": 423,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"Account locked due to too many failed attempts. Try again in 30 minutes.\",\n  \"errorCode\": \"ACCOUNT_LOCKED\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Refresh Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data) {",
-                  "  pm.collectionVariables.set('accessToken',  json.data.accessToken  || '');",
-                  "  pm.collectionVariables.set('refreshToken', json.data.refreshToken || '');",
-                  "}"
-                ]
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh"]
-            },
-            "description": "Exchange a valid refresh token for a new access + refresh pair (rotation)."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh" }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"<jwt-token>\",\n    \"refreshToken\": \"<jwt-token>\",\n    \"tokenType\": \"Bearer\",\n    \"accessTokenExpiresIn\": 900\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            },
-            {
-              "name": "401 Refresh Token Expired",
-              "originalRequest": {
-                "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh" }
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"Refresh token has expired. Please log in again.\",\n  \"errorCode\": \"REFRESH_TOKEN_EXPIRED\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Logout (current device)",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
-            },
-            "description": "Revokes the current access + refresh + session tokens."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/auth/logout" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Logged out successfully\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Logout (all devices)",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/logout-all",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout-all"]
-            },
-            "description": "Revokes ALL tokens for the authenticated user across every device."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/auth/logout-all" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Logged out from all devices\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Forgot Password",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{authEmail}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password"]
-            },
-            "description": "**Rate limit:** 3 req / 10 min per IP.\n\nAlways returns 200 OK regardless of whether the email exists (prevents user enumeration). If the email is registered, a reset link is emailed."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/auth/forgot-password" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"If this email is registered, a reset link has been sent.\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Reset Password",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"<reset-token-from-email>\",\n  \"newPassword\": \"<new-password>\",\n  \"confirmPassword\": \"<new-password>\"\n}"
+              "raw": "{\n  \"token\": \"string\",\n  \"newPassword\": \"example\",\n  \"confirmPassword\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "reset-password"]
-            },
-            "description": "**Rate limit:** 5 req / 5 min per IP.\n\n**Validation:**\n- `token` (required) — from password-reset email link\n- `newPassword` 8–72 chars; uppercase + lowercase + digit + special\n- `confirmPassword` must equal `newPassword`"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/auth/reset-password" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Password reset successful. Please login.\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            },
-            {
-              "name": "400 Invalid Reset Token",
-              "originalRequest": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/auth/reset-password" } },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid or expired reset token\",\n  \"errorCode\": \"INVALID_RESET_TOKEN\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "User Profile",
-      "description": "Profile management for the authenticated user. Requires `Authorization: Bearer <accessToken>`.",
-      "item": [
-        {
-          "name": "Get My Profile",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "me"]
-            }
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/me" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-05-05T10:00:00Z\",\n    \"lastLoginAt\": \"2026-05-05T10:00:00Z\",\n    \"profilePictureUrl\": null\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Update My Profile",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"profilePictureUrl\": \"https://cdn.example.com/avatars/john.png\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "me"]
-            },
-            "description": "**Validation:**\n- `firstName` 2–100 chars (optional)\n- `lastName` 2–100 chars (optional)\n- `profilePictureUrl` (optional)"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "PUT", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/me" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Profile updated\",\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"profilePictureUrl\": \"https://cdn.example.com/avatars/john.png\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Change Password",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"{{authPassword}}\",\n  \"newPassword\": \"<new-password>\",\n  \"confirmPassword\": \"<new-password>\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "me", "change-password"]
-            },
-            "description": "Requires the current password. After success, all sessions are revoked and the user must log in again."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "PUT", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/me/change-password" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Password changed. Please login again.\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Delete My Account",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "me"]
-            },
-            "description": "Permanently deletes the authenticated user's account."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/me" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Account deleted successfully\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Sessions",
-      "description": "Device session management. Requires `Authorization: Bearer <accessToken>`.",
-      "item": [
-        {
-          "name": "List Active Sessions",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/sessions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sessions"]
-            },
-            "description": "Returns all active sessions for the user. The `current` flag marks the session matching the `X-Session-Token` header."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/sessions" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"entityId\": \"SES0000001\",\n      \"platform\": \"ANDROID\",\n      \"deviceId\": \"postman-device-001\",\n      \"ipAddress\": \"127.0.0.1\",\n      \"createdAt\": \"2026-05-05T10:00:00Z\",\n      \"lastAccessedAt\": \"2026-05-05T10:05:00Z\",\n      \"expiresAt\": \"2026-05-05T10:30:00Z\",\n      \"current\": true\n    }\n  ],\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Revoke Session",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "X-Session-Token", "value": "{{sessionToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/sessions/:sessionId",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sessions", ":sessionId"],
-              "variable": [
-                { "key": "sessionId", "value": "1", "description": "DB primary key of the session to revoke" }
-              ]
-            },
-            "description": "Revokes a specific session. Users can only revoke their own sessions. `@ValidSession` requires the caller to have an active session (`X-Session-Token`)."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/sessions/1" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Session revoked successfully\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Token Info",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/sessions/token-info",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sessions", "token-info"]
-            },
-            "description": "Decodes the bearer JWT and returns subject, email, type, expiry, and seconds until expiry."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/sessions/token-info" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"subject\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"tokenType\": \"ACCESS\",\n    \"expiresAt\": \"2026-05-05T10:15:00.000+00:00\",\n    \"expired\": false,\n    \"expiresInSeconds\": 875\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Audit Logs",
-      "description": "Security audit trail. Requires `Authorization: Bearer <accessToken>`.",
-      "item": [
-        {
-          "name": "My Audit Logs",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/audit/me?page=0&size=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "audit", "me"],
-              "query": [
-                { "key": "page", "value": "0", "description": "0-based page index" },
-                { "key": "size", "value": "20", "description": "Page size (default 20)" }
-              ]
-            },
-            "description": "Paginated audit log for the authenticated user."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/audit/me?page=0&size=20" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"content\": [\n      {\n        \"entityId\": \"AUD0000001\",\n        \"action\": \"LOGIN\",\n        \"userId\": \"USR0000001\",\n        \"ipAddress\": \"127.0.0.1\",\n        \"userAgent\": \"PostmanRuntime/7.x\",\n        \"createdAt\": \"2026-05-05T10:00:00Z\"\n      }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1,\n    \"number\": 0,\n    \"size\": 20\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "Audit Logs By User (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/audit/users/:entityId?page=0&size=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "audit", "users", ":entityId"],
-              "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "20" }
+              "host": [
+                "{{baseUrl}}"
               ],
-              "variable": [
-                { "key": "entityId", "value": "{{userId}}", "description": "Target user's entityId" }
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
               ]
             },
-            "description": "**Admin only.** Paginated audit log for any user."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Admin",
-      "description": "Admin-only user management. Requires `ROLE_ADMIN` and `Authorization: Bearer <accessToken>`.",
-      "item": [
-        {
-          "name": "List Users",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users?page=0&size=20&sort=createdAt",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "users"],
-              "query": [
-                { "key": "page", "value": "0", "description": "0-based page index" },
-                { "key": "size", "value": "20", "description": "Page size" },
-                { "key": "sort", "value": "createdAt", "description": "Sort field (descending)" }
-              ]
-            },
-            "description": "Paginated list of all users."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/admin/users?page=0&size=20&sort=createdAt" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"content\": [\n      {\n        \"entityId\": \"USR0000001\",\n        \"email\": \"{{authEmail}}\",\n        \"firstName\": \"John\",\n        \"lastName\": \"Doe\",\n        \"fullName\": \"John Doe\",\n        \"role\": \"USER\",\n        \"status\": \"ACTIVE\",\n        \"createdAt\": \"2026-05-05T10:00:00Z\"\n      }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1,\n    \"number\": 0,\n    \"size\": 20\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            },
-            {
-              "name": "403 Forbidden",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/admin/users" } },
-              "status": "Forbidden",
-              "code": 403,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"Access denied. Required role: ADMIN\",\n  \"errorCode\": \"ACCESS_DENIED\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
+            "description": "Complete password reset with token from email"
+          }
         },
         {
-          "name": "Get User By Id",
+          "name": "POST Resend email verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "users", ":id"],
-              "variable": [
-                { "key": "id", "value": "1", "description": "User DB primary key (Long)" }
-              ]
-            }
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/admin/users/1" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"entityId\": \"USR0000001\",\n    \"email\": \"{{authEmail}}\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-05-05T10:00:00Z\"\n  },\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
             },
-            {
-              "name": "404 Not Found",
-              "originalRequest": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/admin/users/999" } },
-              "status": "Not Found",
-              "code": 404,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"message\": \"User not found: 999\",\n  \"errorCode\": \"USER_NOT_FOUND\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/resend-verification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "resend-verification"
+              ]
+            },
+            "description": "Resends activation email when a pending account exists."
+          }
         },
         {
-          "name": "Suspend User",
+          "name": "POST Register new user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "PUT",
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"string\",\n  \"lastName\": \"string\",\n  \"email\": \"user@example.com\",\n  \"password\": \"example\",\n  \"confirmPassword\": \"string\",\n  \"gender\": \"UNKNOWN\",\n  \"deviceId\": \"string\",\n  \"platform\": \"string\",\n  \"appVersion\": \"string\",\n  \"fcmToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/:id/suspend",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "users", ":id", "suspend"],
-              "variable": [
-                { "key": "id", "value": "1", "description": "User DB primary key (Long)" }
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
               ]
             },
-            "description": "Sets the user status to `SUSPENDED`. The user can no longer log in until reactivated."
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": { "method": "PUT", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/admin/users/1/suspend" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"User suspended: {{authEmail}}\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
-            }
-          ]
+            "description": "Creates a pending account and sends an email verification link."
+          }
         },
         {
-          "name": "Activate User",
+          "name": "POST Refresh access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "const json = pm.response.json();",
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "PUT",
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/:id/activate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "users", ":id", "activate"],
-              "variable": [
-                { "key": "id", "value": "1", "description": "User DB primary key (Long)" }
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
               ]
             },
-            "description": "Re-activates a suspended user and resets failed-attempt counters."
-          },
-          "response": [
+            "description": "Exchange a valid refresh token for a new access + refresh token pair."
+          }
+        },
+        {
+          "name": "POST Logout from current device",
+          "event": [
             {
-              "name": "200 OK",
-              "originalRequest": { "method": "PUT", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/admin/users/1/activate" } },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"User activated: {{authEmail}}\",\n  \"timestamp\": \"2026-05-05T10:00:00Z\"\n}"
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout from current device"
+          }
+        },
+        {
+          "name": "POST Logout from ALL devices",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Revokes all tokens for the authenticated user."
+          }
+        },
+        {
+          "name": "POST Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "const json = pm.response.json();",
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"string\",\n  \"deviceId\": \"string\",\n  \"platform\": \"string\",\n  \"appVersion\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Returns access token (15m), refresh token (7d), session token (30m)."
+          }
+        },
+        {
+          "name": "POST Google sign-in",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "const json = pm.response.json();",
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "google"
+              ]
+            },
+            "description": "Verifies a Google ID token and returns Pooler mobile tokens."
+          }
+        },
+        {
+          "name": "POST Request password reset email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Request password reset email"
+          }
+        },
+        {
+          "name": "POST Apple sign-in",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response status is successful or expected client error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "const json = pm.response.json();",
+                  "const data = json.data || json;",
+                  "if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.sessionToken) pm.environment.set('sessionToken', data.sessionToken);",
+                  "try { const json = pm.response.json(); const data = json.data || json;",
+                  "const mappings = { entityId: 'userId', contactEntityId: 'contactEntityId', locationEntityId: 'locationEntityId', invitationEntityId: 'invitationEntityId', rideEntityId: 'rideEntityId', threadId: 'threadId', messageId: 'messageId', feedbackEntityId: 'feedbackEntityId' };",
+                  "Object.entries(mappings).forEach(([field, variable]) => { if (data[field]) pm.environment.set(variable, data[field]); }); } catch (_) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identityToken\": \"example\",\n  \"firstName\": \"string\",\n  \"lastName\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/apple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "apple"
+              ]
+            },
+            "description": "Verifies an Apple identity token and returns Hoppo mobile tokens."
+          }
         }
       ]
     }

@@ -5,13 +5,11 @@ import com.akash.pooler_backend.constants.ResponseMessages;
 import com.akash.pooler_backend.entity.PbUserEntity;
 import com.akash.pooler_backend.exception.MailDispatchException;
 import com.akash.pooler_backend.service.MailService;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.resend.Resend;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -26,7 +24,7 @@ import java.util.Map;
 public class MailServiceImpl implements MailService {
     private static final String TEMPLATE_VARIABLE_USER_NAME = "userName";
 
-    private final JavaMailSender mailSender;
+    private final Resend resendClient;
     private final TemplateEngine templateEngine;
     private final AppProperties props;
 
@@ -87,14 +85,15 @@ public class MailServiceImpl implements MailService {
     private void sendHtmlMail(String to, String subject, String template, Context ctx) {
         try {
             String html = templateEngine.process(template, ctx);
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(props.getMail().getFrom(), props.getMail().getFromName());
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(message);
-        } catch (MessagingException | MailException | java.io.UnsupportedEncodingException e) {
+            CreateEmailOptions email = CreateEmailOptions.builder()
+                    .from(props.getMail().getFromName() + " <" + props.getMail().getFrom() + ">")
+                    .to(to)
+                    .subject(subject)
+                    .html(html)
+                    .build();
+            CreateEmailResponse response = resendClient.emails().send(email);
+            log.info("mailDispatched provider=resend template={} emailId={}", template, response.getId());
+        } catch (Exception e) {
             log.error("mailDispatchFailed className={} methodName={} template={} exceptionType={} origin={}",
                     getClass().getSimpleName(), "sendHtmlMail", template, e.getClass().getSimpleName(), origin(e));
             throw new MailDispatchException(ResponseMessages.MAIL_SEND_FAILED, e);

@@ -151,8 +151,8 @@ if gcloud secrets describe "$RESEND_SECRET_NAME" >/dev/null 2>&1; then
   gcloud secrets add-iam-policy-binding "$RESEND_SECRET_NAME" \
     --member="serviceAccount:$RUNTIME_SA_EMAIL" \
     --role=roles/secretmanager.secretAccessor >/dev/null
-  ENV_VARS+=",MAIL_HOST=smtp.resend.com,MAIL_PORT=587,MAIL_USERNAME=resend,MAIL_FROM=noreply@athlenaa.com,MAIL_FROM_NAME=Hoppo Auth"
-  SECRET_VARS+=",MAIL_PASSWORD=$RESEND_SECRET_NAME:latest"
+  ENV_VARS+=",EMAIL_FROM=noreply@athlenaa.com,MAIL_FROM_NAME=Hoppo Auth"
+  SECRET_VARS+=",RESEND_API_KEY=$RESEND_SECRET_NAME:latest"
 fi
 if [[ "$DATABASE" == mysql ]]; then
   log "Provisioning Cloud SQL for MySQL"

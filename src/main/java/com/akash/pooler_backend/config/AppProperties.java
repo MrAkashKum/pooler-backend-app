@@ -41,6 +41,9 @@ public class AppProperties {
     private Mail mail = new Mail();
 
     @NotNull
+    private ResendSettings resend = new ResendSettings();
+
+    @NotNull
     private Auth auth = new Auth();
 
     @NotNull
@@ -96,6 +99,13 @@ public class AppProperties {
         private String from;
         @NotBlank
         private String fromName;
+    }
+
+    @Getter
+    @Setter
+    public static class ResendSettings {
+        @NotBlank
+        private String apiKey;
     }
 
     @Getter
