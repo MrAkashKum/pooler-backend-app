@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hoppo Mobile Platform Wireframe v2</title>
+  <link rel="stylesheet" href="hubhop-wireframe-v2.css">
+</head>
+<body>
+  <main class="board">
+    <header class="board-header">
+      <div>
+        <p class="eyebrow">Product wireframe v2</p>
+        <h1>Hoppo</h1>
+        <p class="lede">A Singapore-first meetup platform for two riders to find a fair Common Point, coordinate safely, and book a shared cab externally.</p>
+      </div>
+      <div class="platform-badge">
+        <span class="platform-dot"></span>
+        <div><strong>Open map platform</strong><small>MapLibre + OpenStreetMap + GraphHopper</small></div>
+      </div>
+    </header>
+
+    <section class="band flow-band" aria-labelledby="flow-title">
+      <div class="section-heading">
+        <p class="eyebrow">Primary journey</p>
+        <h2 id="flow-title">From sign-in to shared ride</h2>
+      </div>
+      <div class="flow-grid">
+        <article class="flow-step"><span>01</span><strong>Sign in</strong><small>Google identity</small></article>
+        <div class="flow-arrow">→</div>
+        <article class="flow-step"><span>02</span><strong>Set up</strong><small>Privacy + Home</small></article>
+        <div class="flow-arrow">→</div>
+        <article class="flow-step"><span>03</span><strong>Discover</strong><small>Destination + overlap</small></article>
+        <div class="flow-arrow">→</div>
+        <article class="flow-step"><span>04</span><strong>Compare</strong><small>Fair Common Point</small></article>
+        <div class="flow-arrow">→</div>
+        <article class="flow-step"><span>05</span><strong>Invite</strong><small>Accept or decline</small></article>
+        <div class="flow-arrow">→</div>
+        <article class="flow-step"><span>06</span><strong>Coordinate</strong><small>2-hour chat</small></article>
+        <div class="flow-arrow">→</div>
+        <article class="flow-step"><span>07</span><strong>Meet</strong><small>Live progress</small></article>
+        <div class="flow-arrow">→</div>
+        <article class="flow-step"><span>08</span><strong>Book</strong><small>Grab / TADA / other</small></article>
+      </div>
+    </section>
+
+    <section class="architecture" aria-labelledby="ia-title">
+      <div class="section-heading">
+        <p class="eyebrow">Information architecture</p>
+        <h2 id="ia-title">Three product spaces</h2>
+      </div>
+      <div class="architecture-grid">
+        <article class="architecture-column">
+          <div class="architecture-icon blue">⌖</div>
+          <h3>Explore</h3>
+          <p>Destination search, route matches, Common Point comparison.</p>
+          <ul><li>Map discovery</li><li>Match cards</li><li>Saved places</li></ul>
+        </article>
+        <article class="architecture-column">
+          <div class="architecture-icon green">↔</div>
+          <h3>Coordinate</h3>
+          <p>Invitations, expiring chat, live meetup progress and arrival.</p>
+          <ul><li>Invitations</li><li>2-hour chat</li><li>Meetup status</li></ul>
+        </article>
+        <article class="architecture-column">
+          <div class="architecture-icon amber">✓</div>
+          <h3>Trust & account</h3>
+          <p>Verified identity, privacy controls, safety tools and history.</p>
+          <ul><li>Profile</li><li>Block / report</li><li>Past meetups</li></ul>
+        </article>
+        <aside class="architecture-rule">
+          <strong>Product boundary</strong>
+          <p>Hoppo coordinates two riders. Cab dispatch, fare payment and driver support remain in the selected external cab app.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screens" aria-labelledby="screens-title">
+      <div class="section-heading screens-heading">
+        <div><p class="eyebrow">End-to-end wireframes</p><h2 id="screens-title">Critical mobile states</h2></div>
+        <div class="legend"><span><i class="swatch green-bg"></i> Primary</span><span><i class="swatch blue-bg"></i> Route</span><span><i class="swatch amber-bg"></i> Attention</span><span><i class="swatch coral-bg"></i> Safety</span></div>
+      </div>
+
+      <div class="screen-grid">
+        <article class="screen-card">
+          <header><span>01</span><div><strong>Google sign-in</strong><small>Fast trusted entry</small></div></header>
+          <div class="phone">
+            <div class="status"><span>9:41</span><b></b><span>●●●</span></div>
+            <div class="phone-content auth-screen">
+              <div class="brand-mark"><span>H</span></div>
+              <h3>Meet better.<br>Ride together.</h3>
+              <p>Find one fair pickup point with someone already heading your way.</p>
+              <button class="button google"><span class="google-mark">G</span>Continue with Google</button>
+              <div class="trust-note"><b>Verified community</b><span>Your exact Home stays private.</span></div>
+              <button class="button primary">Continue</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>02</span><div><strong>Permissions & privacy</strong><small>Progressive consent</small></div></header>
+          <div class="phone">
+            <div class="status"><span>9:42</span><b></b><span>●●●</span></div>
+            <div class="phone-content">
+              <div class="topbar"><button aria-label="Back">‹</button><strong>Before we match</strong><span></span></div>
+              <div class="permission-visual"><div class="pulse"></div><div class="pin">●</div></div>
+              <h3>Share location only while discovering</h3>
+              <p class="body-copy">Nearby riders see an approximate area until both sides accept.</p>
+              <div class="permission-row"><span class="mini-icon blue-bg">⌖</span><div><b>Location</b><small>Required during discovery</small></div><em>Allow</em></div>
+              <div class="permission-row"><span class="mini-icon green-bg">↗</span><div><b>Notifications</b><small>Invites and meetup updates</small></div><em>Allow</em></div>
+              <div class="permission-row"><span class="mini-icon amber-bg">!</span><div><b>Safety</b><small>Block and report anytime</small></div><em>On</em></div>
+              <button class="button primary bottom-action">Continue setup</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>03</span><div><strong>Profile & saved places</strong><small>Home fallback</small></div></header>
+          <div class="phone">
+            <div class="status"><span>9:43</span><b></b><span>●●●</span></div>
+            <div class="phone-content">
+              <div class="topbar"><span></span><strong>Set up profile</strong><span>1/2</span></div>
+              <div class="profile-row"><div class="avatar">AK</div><div><b>Akash Kumar</b><small>Verified by Google</small></div><span class="verified">✓</span></div>
+              <label>Display name<input value="Akash Kumar" readonly></label>
+              <label>Telegram <span>Optional</span><input value="@akash_hops" readonly></label>
+              <div class="field-title"><b>Saved places</b><span>Used only as a fallback</span></div>
+              <div class="place-row"><span class="mini-icon green-soft">H</span><div><b>Home</b><small>Clementi, Singapore</small></div><em>›</em></div>
+              <div class="place-row"><span class="mini-icon blue-soft">W</span><div><b>Work</b><small>Add a work location</small></div><em>+</em></div>
+              <div class="privacy-strip">Only the approximate starting area is shared before acceptance.</div>
+              <button class="button primary bottom-action">Save profile</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>04</span><div><strong>Discovery start</strong><small>Map-first home</small></div></header>
+          <div class="phone">
+            <div class="status overlay"><span>9:45</span><b></b><span>●●●</span></div>
+            <div class="phone-content map-screen">
+              <div class="map-canvas map-one">
+                <div class="road r1"></div><div class="road r2"></div><div class="road r3"></div><div class="road r4"></div>
+                <div class="search-box"><span>⌕</span><div><small>Where are you going?</small><b>Search destination</b></div></div>
+                <div class="user-dot"></div>
+                <div class="map-attribution">MapLibre • © OpenStreetMap</div>
+              </div>
+              <div class="bottom-sheet compact-sheet">
+                <div class="handle"></div>
+                <div class="sheet-title"><div><small>Start from</small><b>Current location</b></div><button aria-label="Saved places">⌂</button></div>
+                <div class="recent-place"><span class="mini-icon blue-soft">↗</span><div><b>Marina Bay Sands</b><small>10 Bayfront Avenue</small></div></div>
+                <div class="recent-place"><span class="mini-icon green-soft">H</span><div><b>Home</b><small>Clementi</small></div></div>
+              </div>
+              <nav class="bottom-nav"><a class="active">⌖<small>Discover</small></a><a>↔<small>Invites</small></a><a>◌<small>Chat</small></a><a>●<small>Profile</small></a></nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>05</span><div><strong>Route matches</strong><small>Ranked nearby riders</small></div></header>
+          <div class="phone">
+            <div class="status overlay"><span>9:46</span><b></b><span>●●●</span></div>
+            <div class="phone-content map-screen">
+              <div class="map-canvas map-two">
+                <div class="road r1"></div><div class="road r2"></div><div class="road r4"></div>
+                <div class="route route-a"></div><div class="route route-b"></div><div class="route overlap"></div>
+                <div class="map-pin pin-a">A</div><div class="map-pin pin-b">N</div><div class="map-pin common">★</div>
+                <div class="destination-pill">Marina Bay Sands <span>×</span></div>
+                <div class="map-attribution">MapLibre • © OpenStreetMap</div>
+              </div>
+              <div class="bottom-sheet match-sheet">
+                <div class="handle"></div>
+                <div class="sheet-title"><div><small>3 compatible riders</small><b>Best match nearby</b></div><span class="chip success">Live</span></div>
+                <div class="match-profile"><div class="avatar small-avatar">N</div><div><b>Nora</b><small>4.8 ★ • 12 shared meetups</small></div><span class="chip blue-chip">82% route</span></div>
+                <div class="match-metrics"><div><small>You walk</small><b>4 min</b></div><div><small>Nora walks</small><b>5 min</b></div><div><small>Common Point</small><b>Bugis</b></div></div>
+                <button class="button primary">View fair meetup</button>
+                <button class="text-button">See other matches</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>06</span><div><strong>Smart Common Point</strong><small>Transparent fairness</small></div></header>
+          <div class="phone">
+            <div class="status overlay"><span>9:47</span><b></b><span>●●●</span></div>
+            <div class="phone-content map-screen">
+              <div class="map-canvas comparison-map">
+                <div class="road r1"></div><div class="road r2"></div><div class="road r3"></div>
+                <div class="route compare-a"></div><div class="route compare-b"></div>
+                <div class="map-pin pin-a">A</div><div class="map-pin pin-b">N</div><div class="map-pin common large">★</div>
+                <button class="floating-back" aria-label="Back">‹</button>
+              </div>
+              <div class="bottom-sheet fairness-sheet">
+                <div class="handle"></div>
+                <div class="sheet-title"><div><small>Suggested Common Point</small><b>Bugis MRT Exit B</b></div><span class="chip success">Balanced</span></div>
+                <p class="location-detail">Covered pickup bay • 140 m from main road</p>
+                <div class="fairness-grid"><div><span class="avatar tiny-avatar blue-bg">A</span><small>You</small><b>3 min</b><em>240 m</em></div><div class="fairness-score"><small>Difference</small><b>1 min</b><span>Fair for both</span></div><div><span class="avatar tiny-avatar green-bg">N</span><small>Nora</small><b>4 min</b><em>310 m</em></div></div>
+                <div class="fairness-bar"><i></i></div>
+                <button class="button primary">Send meetup invitation</button>
+                <button class="text-button">Suggest another point</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>07</span><div><strong>Invitation received</strong><small>Decision with context</small></div></header>
+          <div class="phone">
+            <div class="status"><span>9:49</span><b></b><span>●●●</span></div>
+            <div class="phone-content">
+              <div class="topbar"><button aria-label="Close">×</button><strong>Meetup invitation</strong><span>•••</span></div>
+              <div class="invite-people"><div class="avatar">AK</div><div class="invite-line"></div><div class="avatar alt">N</div></div>
+              <h3 class="center">Akash wants to meet at Bugis MRT Exit B</h3>
+              <p class="body-copy center">Both routes continue toward Marina Bay.</p>
+              <div class="summary-card"><div><small>Route overlap</small><b>82%</b></div><div><small>Your walk</small><b>4 min</b></div><div><small>Invite expires</small><b>04:32</b></div></div>
+              <div class="safety-note"><b>Before accepting</b><span>Your exact live position becomes visible only during this meetup.</span></div>
+              <button class="button primary">Accept and open chat</button>
+              <button class="button secondary">Decline</button>
+              <button class="text-button coral-text">Block or report</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>08</span><div><strong>Ephemeral chat</strong><small>Coordinate quickly</small></div></header>
+          <div class="phone">
+            <div class="status"><span>9:51</span><b></b><span>●●●</span></div>
+            <div class="phone-content chat-screen">
+              <div class="chat-topbar"><button aria-label="Back">‹</button><div class="avatar tiny-avatar alt">N</div><div><b>Nora</b><small>Heading to Common Point</small></div><span>•••</span></div>
+              <div class="expiry-banner"><span>◷</span><b>Chat expires in 01:58:42</b></div>
+              <div class="meeting-card"><span class="mini-icon coral-bg">★</span><div><b>Bugis MRT Exit B</b><small>Common Point • Open map</small></div><em>›</em></div>
+              <div class="messages"><div class="message incoming">I am leaving now. About 4 minutes.<small>9:51</small></div><div class="message outgoing">Perfect. I am near the blue sign.<small>9:52 ✓✓</small></div><div class="system-message">Live location shared for this meetup</div></div>
+              <div class="chat-actions"><button class="telegram-button"><span>↗</span>Telegram</button><div class="composer"><span>Message...</span><button aria-label="Send">↑</button></div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>09</span><div><strong>Live meetup progress</strong><small>Walk to Common Point</small></div></header>
+          <div class="phone">
+            <div class="status overlay"><span>9:54</span><b></b><span>●●●</span></div>
+            <div class="phone-content map-screen">
+              <div class="map-canvas live-map">
+                <div class="road r1"></div><div class="road r2"></div><div class="road r3"></div><div class="road r4"></div>
+                <div class="walk-route walk-a"></div><div class="walk-route walk-b"></div>
+                <div class="user-arrow">▲</div><div class="map-pin pin-b">N</div><div class="map-pin common large">★</div>
+                <div class="map-attribution">MapLibre • © OpenStreetMap</div>
+              </div>
+              <div class="bottom-sheet progress-sheet">
+                <div class="handle"></div>
+                <div class="progress-header"><div><small>Common Point</small><b>Bugis MRT Exit B</b></div><span class="chip amber-chip">Meeting</span></div>
+                <div class="arrival-row"><div class="avatar tiny-avatar blue-bg">A</div><div><b>You</b><span class="progress-line"><i style="width:72%"></i></span></div><strong>2 min</strong></div>
+                <div class="arrival-row"><div class="avatar tiny-avatar green-bg">N</div><div><b>Nora</b><span class="progress-line"><i style="width:48%"></i></span></div><strong>4 min</strong></div>
+                <button class="button secondary">I have arrived</button>
+                <button class="text-button coral-text">Need help?</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>10</span><div><strong>Arrival confirmation</strong><small>Physical meet check</small></div></header>
+          <div class="phone">
+            <div class="status"><span>9:58</span><b></b><span>●●●</span></div>
+            <div class="phone-content arrival-screen">
+              <div class="success-ring"><span>✓</span></div>
+              <p class="eyebrow">Common Point reached</p>
+              <h3>Did you meet Nora?</h3>
+              <p class="body-copy center">Confirm only when you are physically together at Bugis MRT Exit B.</p>
+              <div class="identity-card"><div class="avatar alt">N</div><div><b>Nora</b><small>Blue jacket • 4.8 ★</small></div><span class="verified">✓</span></div>
+              <button class="button primary">Yes, we are together</button>
+              <button class="button secondary">Not yet</button>
+              <div class="emergency-row"><span class="mini-icon coral-soft">!</span><div><b>Something feels wrong?</b><small>Leave, block or report safely</small></div><em>›</em></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>11</span><div><strong>External cab handoff</strong><small>Book after meeting</small></div></header>
+          <div class="phone">
+            <div class="status"><span>10:00</span><b></b><span>●●●</span></div>
+            <div class="phone-content handoff-screen">
+              <div class="handoff-map"><div class="cab-route"></div><div class="map-pin common">★</div><div class="destination-marker">◆</div></div>
+              <span class="chip success big-chip">Both riders confirmed</span>
+              <h3>Choose a cab service</h3>
+              <p class="body-copy center">Hoppo will open the selected app with your Common Point ready to use.</p>
+              <button class="service-button grab"><b>GRAB</b><span>Open app</span></button>
+              <button class="service-button tada"><b>TADA</b><span>Open app</span></button>
+              <button class="service-button other"><b>Other cab service</b><span>Choose app</span></button>
+              <div class="handoff-note">Fare, booking and payment are managed by the cab provider.</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>12</span><div><strong>Edit profile</strong><small>Consistent account data</small></div></header>
+          <div class="phone">
+            <div class="status"><span>10:04</span><b></b><span>●●●</span></div>
+            <div class="phone-content">
+              <div class="topbar"><button aria-label="Back">‹</button><strong>Edit profile</strong><span class="green-text">Save</span></div>
+              <div class="edit-avatar"><div class="avatar">AK</div><button>Change photo</button></div>
+              <label>Google account<input value="akash@gmail.com" disabled></label>
+              <label>Display name<input value="Akash Kumar" readonly></label>
+              <label>Telegram<input value="@akash_hops" readonly></label>
+              <div class="field-title"><b>Saved places</b><span>Private</span></div>
+              <div class="place-row"><span class="mini-icon green-soft">H</span><div><b>Home</b><small>Clementi, Singapore</small></div><em>›</em></div>
+              <div class="place-row"><span class="mini-icon blue-soft">W</span><div><b>Work</b><small>Marina Bay</small></div><em>›</em></div>
+              <button class="button primary bottom-action">Save changes</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>13</span><div><strong>Safety centre</strong><small>Control and recovery</small></div></header>
+          <div class="phone">
+            <div class="status"><span>10:05</span><b></b><span>●●●</span></div>
+            <div class="phone-content">
+              <div class="topbar"><button aria-label="Back">‹</button><strong>Safety centre</strong><span></span></div>
+              <div class="safety-hero"><span>✓</span><div><b>You stay in control</b><small>End any meetup or location share instantly.</small></div></div>
+              <div class="settings-group"><button><span class="mini-icon coral-soft">!</span><div><b>Report a safety issue</b><small>Tell us what happened</small></div><em>›</em></button><button><span class="mini-icon blue-soft">◉</span><div><b>Location sharing</b><small>Only during active meetup</small></div><em>On</em></button><button><span class="mini-icon green-soft">▣</span><div><b>Blocked users</b><small>Manage blocked profiles</small></div><em>›</em></button></div>
+              <div class="support-card"><b>Emergency?</b><p>Move to a public place and contact local emergency services.</p><button class="button danger">Call 999</button></div>
+              <button class="text-button">Privacy and retention policy</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen-card">
+          <header><span>14</span><div><strong>Meetup history</strong><small>Lightweight record</small></div></header>
+          <div class="phone">
+            <div class="status"><span>10:06</span><b></b><span>●●●</span></div>
+            <div class="phone-content">
+              <div class="topbar"><button aria-label="Back">‹</button><strong>Past meetups</strong><span></span></div>
+              <div class="history-summary"><div><b>6</b><small>Completed</small></div><div><b>4.9</b><small>Your rating</small></div><div><b>42 km</b><small>Shared route</small></div></div>
+              <div class="history-item"><span class="date-block"><b>18</b><small>JUN</small></span><div><b>Bugis → Marina Bay</b><small>With Nora • Completed</small><span class="chip success">Safe meetup</span></div><em>›</em></div>
+              <div class="history-item"><span class="date-block"><b>04</b><small>JUN</small></span><div><b>Clementi → One-North</b><small>With Daniel • Completed</small><span class="chip blue-chip">76% overlap</span></div><em>›</em></div>
+              <div class="history-item muted-item"><span class="date-block"><b>28</b><small>MAY</small></span><div><b>Orchard → Marina Bay</b><small>Invitation expired</small></div><em>›</em></div>
+              <div class="retention-note">Exact live-location traces are not shown after the meetup ends.</div>
+              <nav class="bottom-nav"><a>⌖<small>Discover</small></a><a>↔<small>Invites</small></a><a>◌<small>Chat</small></a><a class="active">●<small>Profile</small></a></nav>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="component-band" aria-labelledby="components-title">
+      <div class="section-heading"><p class="eyebrow">Reusable system</p><h2 id="components-title">Product components</h2></div>
+      <div class="component-grid">
+        <article><span class="component-number">01</span><h3>Match card</h3><p>Identity, trust, route overlap and fair walking comparison before invitation.</p></article>
+        <article><span class="component-number">02</span><h3>Common Point card</h3><p>Public landmark, pickup quality, Rider A/B ETA, distance and fairness delta.</p></article>
+        <article><span class="component-number">03</span><h3>Expiry status</h3><p>Consistent countdown for invitations and chat, with explicit expired state.</p></article>
+        <article><span class="component-number">04</span><h3>Safety action</h3><p>Block, report and stop sharing remain reachable during every active meetup.</p></article>
+        <article><span class="component-number">05</span><h3>External handoff</h3><p>Large provider actions shown only after both riders confirm physical arrival.</p></article>
+      </div>
+    </section>
+
+    <footer>
+      <strong>Hoppo wireframe v2</strong>
+      <span>Product states align with the Spring Boot discovery, invitation, Common Point, chat, Telegram, saved location and ride lifecycle modules.</span>
+    </footer>
+  </main>
+</body>
+</html>

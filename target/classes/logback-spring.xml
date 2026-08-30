@@ -1,0 +1,45 @@
+<configuration debug="false" scan="true" scanPeriod="30 seconds">
+
+    <!-- Values come from application-*.properties so each Spring profile can tune retention safely. -->
+    <springProperty scope="context" name="LOG_PATH" source="app.logging.path" defaultValue="./logs"/>
+    <springProperty scope="context" name="LOG_MAX_FILE_SIZE" source="app.logging.archive.max-file-size" defaultValue="100MB"/>
+    <springProperty scope="context" name="LOG_MAX_HISTORY_HOURS" source="app.logging.archive.max-history-hours" defaultValue="720"/>
+    <springProperty scope="context" name="LOG_TOTAL_SIZE_CAP" source="app.logging.archive.total-size-cap" defaultValue="3GB"/>
+    <springProperty scope="context" name="APP_LOG_LEVEL" source="app.logging.level" defaultValue="INFO"/>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/pooler-backend.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/archive/pooler-backend.%d{yyyy-MM-dd_HH}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${LOG_MAX_HISTORY_HOURS}</maxHistory>
+            <totalSizeCap>${LOG_TOTAL_SIZE_CAP}</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%date [trace=%X{x_request_id}] [errorRef=%X{error_reference_id}] %-5level [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="async-FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="FILE" />
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date [trace=%X{x_request_id}] [errorRef=%X{error_reference_id}] %highlight(%-5level) [%thread] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.akash.pooler_backend" level="${APP_LOG_LEVEL}" />
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="async-FILE" />
+    </root>
+
+</configuration>

@@ -1,0 +1,59 @@
+# ══════════════════════════════════════════════════════
+#  Docker Compose — Pooler-backend
+#  Profiles: dev (default), staging
+# ══════════════════════════════════════════════════════
+version: '3.9'
+
+services:
+
+  # ── Auth Service ──────────────────────────────────────
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: pooler/pooler-backend:1.0.0
+    container_name: pooler-backend
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-900000}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-604800000}
+      MAIL_USERNAME: ${MAIL_USERNAME:-dev}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-dev}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080/pooler-backend}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:*,http://127.0.0.1:*}
+    volumes:
+      - auth-data:/app/data    # H2 file DB persistence
+    networks:
+      - auth-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/pooler-backend/api/v1/public/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── Mailhog (local mail catcher) ──────────────────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: pooler-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"    # SMTP
+      - "8025:8025"    # Web UI → http://localhost:8025
+    networks:
+      - auth-network
+    profiles:
+      - dev
+
+volumes:
+  auth-data:
+    driver: local
+
+networks:
+  auth-network:
+    driver: bridge
